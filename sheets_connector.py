@@ -15,18 +15,18 @@ SCOPE = [
 def authenticate_google_sheets():
     """
     Authenticate with Google Sheets API
-    Requires credentials.json file in project root
+    Uses st.secrets for credentials (Streamlit Cloud)
     """
     try:
-        creds = Credentials.from_service_account_file(
-            'credentials.json',
+        creds = Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
             scopes=SCOPE
         )
         client = gspread.authorize(creds)
         return client
     except Exception as e:
         st.error(f"Authentication failed: {str(e)}")
-        st.info("Please add credentials.json file with Google API key")
+        st.info("Please add gcp_service_account to Streamlit Secrets")
         return None
 
 
