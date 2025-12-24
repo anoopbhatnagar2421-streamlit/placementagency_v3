@@ -1,6 +1,6 @@
-from logger_config import logger
-import logging
-logging.disable(logging.INFO)  # सभी INFO messages hide करो
+# from #logger_config import #logger
+# import logging
+# logging.disable(logging.INFO)  # सभी INFO messages hide करो
 
 # ====================================================
 # PAGE CONFIG
@@ -49,7 +49,7 @@ warnings.filterwarnings('ignore')
 # GOOGLE SHEETS CONNECTION
 # ====================================================
 SHEET_ID = "1rpuXdpfwjy0BQcaZcn0Acbh-Se6L3PvyNGiNu4NLcPA"
-#logger
+##logger
 # All required columns for Candidates sheet
 REQUIRED_COLUMNS = [
     "Candidate ID", "Date Applied", "Full Name", "Father Name", "DOB",
@@ -70,47 +70,47 @@ REQUIRED_COLUMNS = [
     "Reference 2 Name", "Reference 2 Contact",
     "Status",
 ]
-logger.info("Required columns defined.")
+#logger.info("Required columns defined.")
 # ✅ Deployment ke liye (local vs Streamlit Cloud)
 if os.path.exists("credentials.json"):
-    logger.info("Using local credentials file for Google Sheets authentication.")
+    #logger.info("Using local credentials file for Google Sheets authentication.")
     CRED_FILE = "credentials.json"  # Local development
 else:
-    logger.info("Using Streamlit secrets for Google Sheets authentication.")
+    #logger.info("Using Streamlit secrets for Google Sheets authentication.")
     CRED_FILE = None  # Streamlit Cloud - use secrets
 
 
 @st.cache_resource
 def get_google_sheets_client():
-    logger.info("Connecting to Google Sheets...")
+    #logger.info("Connecting to Google Sheets...")
     #"""Connect to Google Sheets"""
-    logger.info("=" * 60)
-    logger.info("Initializing Google Sheets client...")
+    #logger.info("=" * 60)
+    #logger.info("Initializing Google Sheets client...")
     try:
-        logger.info(f"Using credentials file: {CRED_FILE}")
+        #logger.info(f"Using credentials file: {CRED_FILE}")
         scope = [
             "https://spreadsheets.google.com/feeds",
             "https://www.googleapis.com/auth/drive",
         ]
-        logger.info(f"OAuth scopes: {scope}")
+        #logger.info(f"OAuth scopes: {scope}")
         if CRED_FILE:
             # Local development
             credentials = ServiceAccountCredentials.from_json_keyfile_name(
                 CRED_FILE, scope
             )
-            logger.info("Using local credentials file for Google Sheets authentication.")
+            #logger.info("Using local credentials file for Google Sheets authentication.")
         else:
             # Streamlit Cloud deployment
-            logger.info("Loading credentials from Streamlit secrets...")
+            #logger.info("Loading credentials from Streamlit secrets...")
             creds_dict = st.secrets["gcp_service_account"]
             credentials = ServiceAccountCredentials.from_json_keyfile_dict(
                 creds_dict, scope
             )
-            logger.info("Using Streamlit secrets for Google Sheets authentication.")
+            #logger.info("Using Streamlit secrets for Google Sheets authentication.")
         client = gspread.authorize(credentials)
         return client
     except Exception as e:
-        logger.error(f"Google Sheets connection error: {e}")
+        #logger.error(f"Google Sheets connection error: {e}")
         st.error(f"❌ Google Sheets connection error: {e}")
         return None
 
@@ -125,31 +125,31 @@ def verify_sheet_columns():
     SAFE: Only adds headers, never modifies or deletes existing data.
     Also removes duplicate column headers.
     """
-    logger.info("Verifying Candidates sheet columns...")
+    #logger.info("Verifying Candidates sheet columns...")
     try:
-        logger.info("Starting verification of sheet columns.")
+        #logger.info("Starting verification of sheet columns.")
         client = get_google_sheets_client()
         if client is None:
-            logger.error("Cannot verify columns: No Google Sheets client.")
+            #logger.error("Cannot verify columns: No Google Sheets client.")
             return
         
         spreadsheet = client.open_by_key(SHEET_ID)
-        logger.info(f"Opened spreadsheet with ID: {SHEET_ID}")
+        #logger.info(f"Opened spreadsheet with ID: {SHEET_ID}")
         worksheet = spreadsheet.worksheet("Candidates")
-        logger.info("Accessed 'Candidates' worksheet.")
+        #logger.info("Accessed 'Candidates' worksheet.")
         
         # Get existing headers (Row 1 only)
         existing_headers = worksheet.row_values(1)
-        logger
+        #logger
         # Check for duplicate headers and remove them
         if len(existing_headers) != len(set(existing_headers)):
-            logger.warning("⚠️ Duplicate column headers detected, cleaning up...")
+            #logger.warning("⚠️ Duplicate column headers detected, cleaning up...")
             
             # Keep only first occurrence of each column
             seen = set()
             clean_headers = []
             duplicate_cols = []
-            logger.info(f"Existing headers: {existing_headers}")
+            #logger.info(f"Existing headers: {existing_headers}")
             for i, header in enumerate(existing_headers):
                 if header in seen:
                     duplicate_cols.append((i+1, header))  # 1-based index for gspread
@@ -158,37 +158,37 @@ def verify_sheet_columns():
                     seen.add(header)
             
             if duplicate_cols:
-                logger.info("Removing duplicate columns...")
+                #logger.info("Removing duplicate columns...")
                 # Remove duplicates (delete from right to left to avoid index shift)
                 for col_index, col_name in sorted(duplicate_cols, reverse=True):
                     worksheet.delete_columns(col_index)
-                    logger.info(f"  ✅ Removed duplicate: {col_name}")
+                    #logger.info(f"  ✅ Removed duplicate: {col_name}")
                 
                 existing_headers = clean_headers
-                logger.info("✅ Sheet cleaned up")
+                #logger.info("✅ Sheet cleaned up")
         
         # Find missing columns
         missing = [col for col in REQUIRED_COLUMNS if col not in existing_headers]
         
         if missing:
-            logger.info(f"Missing columns detected: {missing}")
+            #logger.info(f"Missing columns detected: {missing}")
             # SAFETY CHECK: Ensure we have at least 1 row of data before adding columns
             total_rows = len(worksheet.get_all_values())
             
             if total_rows > 0:
-                logger.info("Adding missing columns to Candidates sheet...")
+                #logger.info("Adding missing columns to Candidates sheet...")
                 # Add missing columns to the right of existing headers
                 last_col = len(existing_headers)
                 for i, col in enumerate(missing):
-                    logger.info(f"  ➕ Adding column: {col}")
+                    #logger.info(f"  ➕ Adding column: {col}")
                     # update_cell only updates the cell, doesn't modify data
                     worksheet.update_cell(1, last_col + i + 1, col)
                 
-                logger.info(f"✅ Added {len(missing)} missing columns (No data affected)")
+                #logger.info(f"✅ Added {len(missing)} missing columns (No data affected)")
         
         return True
     except Exception as e:
-        logger
+        #logger
         print(f"⚠️ Could not verify columns: {e}")
         return False
 
@@ -197,11 +197,11 @@ def verify_sheet_columns():
 # SMALL HELPER: MAKE ALL COLUMNS STRING
 # ====================================================
 def _to_str_df(data):
-    logger.info("Converting dict/records to DataFrame and forcing all columns to string.")
+    #logger.info("Converting dict/records to DataFrame and forcing all columns to string.")
     #"""Convert dict/records → DataFrame and force all columns to string."""
     df = pd.DataFrame(data)
     if not df.empty:
-        logger.info("Converting all DataFrame columns to string type.")
+        #logger.info("Converting all DataFrame columns to string type.")
         for col in df.columns:
             df[col] = df[col].astype(str)
     return df
@@ -212,76 +212,76 @@ def _to_str_df(data):
 # ====================================================
 @st.cache_data(ttl=300)
 def get_companies():
-    logger.info("Fetching companies from CID sheet.")
+    #logger.info("Fetching companies from CID sheet.")
     #"""Fetch companies from CID sheet"""
     try:
-        logger.info("Attempting to get Google Sheets client for companies.")
+        #logger.info("Attempting to get Google Sheets client for companies.")
         client = get_google_sheets_client()
         if client:
-            logger.info("Google Sheets client obtained for companies.")
+            #logger.info("Google Sheets client obtained for companies.")
             sheet = client.open_by_key(SHEET_ID).worksheet("CID")
             data = sheet.get_all_records()
             return _to_str_df(data)
         return pd.DataFrame()
     except Exception as e:
-        logger.error(f"Error fetching companies: {e}")
+        #logger.error(f"Error fetching companies: {e}")
         st.warning(f"⚠️ Error fetching companies: {e}")
         return pd.DataFrame()
 
 
 @st.cache_data(ttl=300)
 def get_vacancies():
-    logger.info("Fetching vacancies from Sheet4.")
+    #logger.info("Fetching vacancies from Sheet4.")
     #"""Fetch vacancies from Sheet4"""
     try:
-        logger.info("Attempting to get Google Sheets client for vacancies.")
+        #logger.info("Attempting to get Google Sheets client for vacancies.")
         client = get_google_sheets_client()
         if client:
-            logger.info("Google Sheets client obtained for vacancies.")
+            #logger.info("Google Sheets client obtained for vacancies.")
             sheet = client.open_by_key(SHEET_ID).worksheet("Sheet4")
             data = sheet.get_all_records()
             return _to_str_df(data)
         return pd.DataFrame()
     except Exception as e:
-        logger.error(f"Error fetching vacancies: {e}")
+        #logger.error(f"Error fetching vacancies: {e}")
         st.warning(f"⚠️ Error fetching vacancies: {e}")
         return pd.DataFrame()
 
 
 @st.cache_data(ttl=300)
 def get_candidates():
-    logger.info("Fetching candidates from Candidates sheet.")
+    #logger.info("Fetching candidates from Candidates sheet.")
     #"""Fetch candidates from Candidates sheet"""
     try:
-        logger.info("Attempting to get Google Sheets client for candidates.")
+        #logger.info("Attempting to get Google Sheets client for candidates.")
         client = get_google_sheets_client()
         if client:
-            logger.info("Google Sheets client obtained for candidates.")
+            #logger.info("Google Sheets client obtained for candidates.")
             sheet = client.open_by_key(SHEET_ID).worksheet("Candidates")
             data = sheet.get_all_records()
             return _to_str_df(data)
         return pd.DataFrame()
     except Exception as e:
-        logger.error(f"Error fetching candidates: {e}")
+        #logger.error(f"Error fetching candidates: {e}")
         st.warning(f"⚠️ Error fetching candidates: {e}")
         return pd.DataFrame()
 
 
 @st.cache_data(ttl=300)
 def get_interviews():
-    logger.info("Fetching interviews from Interview_Records sheet.")
+    #logger.info("Fetching interviews from Interview_Records sheet.")
     #"""Fetch interviews from Interview_Records sheet"""
     try:
-        logger.info("Attempting to get Google Sheets client for interviews.")
+        #logger.info("Attempting to get Google Sheets client for interviews.")
         client = get_google_sheets_client()
         if client: 
-            logger.info("Google Sheets client obtained for interviews.")
+            #logger.info("Google Sheets client obtained for interviews.")
             sheet = client.open_by_key(SHEET_ID).worksheet("Interview_Records")
             data = sheet.get_all_records()
             return _to_str_df(data)
         return pd.DataFrame()
     except Exception as e:
-        logger.error(f"Error fetching interviews: {e}")
+        #logger.error(f"Error fetching interviews: {e}")
         st.warning(f"⚠️ Error fetching interviews: {e}")
         return pd.DataFrame()
 
@@ -290,13 +290,13 @@ def get_interviews():
 # GENERIC APPEND TO SHEET
 # ====================================================
 def add_to_sheet(sheet_name, data_dict):
-    logger.info(f"Adding data to sheet: {sheet_name} with data: {data_dict}")
+    #logger.info(f"Adding data to sheet: {sheet_name} with data: {data_dict}")
     #"""Add new row to Google Sheet with dynamic header matching"""
     try:
-        logger.info(f"Attempting to get Google Sheets client for adding data to {sheet_name}.")
+        #logger.info(f"Attempting to get Google Sheets client for adding data to {sheet_name}.")
         client = get_google_sheets_client()
         if client:
-            logger.info(f"Google Sheets client obtained for adding data to {sheet_name}.")
+            #logger.info(f"Google Sheets client obtained for adding data to {sheet_name}.")
             sheet = client.open_by_key(SHEET_ID).worksheet(sheet_name)
             headers = sheet.row_values(1)
 
@@ -312,11 +312,11 @@ def add_to_sheet(sheet_name, data_dict):
             st.cache_data.clear()
             return True
         else:
-            logger.error("Cannot add data: No Google Sheets client.")
+            #logger.error("Cannot add data: No Google Sheets client.")
             st.error("❌ Cannot connect to Google Sheets")
             return False
     except Exception as e:
-        logger.error(f"Error adding data to sheet {sheet_name}: {e}")
+        #logger.error(f"Error adding data to sheet {sheet_name}: {e}")
         st.error(f"❌ Error adding data: {e}")
         return False
 
@@ -350,22 +350,22 @@ def generate_next_cid():
 # SESSION STATE INITIALIZATION
 # ====================================================
 if "logged_in" not in st.session_state:
-        logger.info("Initializing session state for 'logged_in'.")
+        #logger.info("Initializing session state for 'logged_in'.")
         st.session_state.logged_in = False
 if "username" not in st.session_state:
-        logger.info("Initializing session state for 'username'.")
+        #logger.info("Initializing session state for 'username'.")
         st.session_state.username = None
 if "role" not in st.session_state:
-        logger.info("Initializing session state for 'username'.")
+        #logger.info("Initializing session state for 'username'.")
         st.session_state.role = None
 if "full_name" not in st.session_state:
-        logger.info("Initializing session state for 'full_name'.")
+        #logger.info("Initializing session state for 'full_name'.")
         st.session_state.full_name = ""
 if "email" not in st.session_state:
-        logger.info("Initializing session state for 'email'.")
+        #logger.info("Initializing session state for 'email'.")
         st.session_state.email = ""
 if "active_candidate_tab" not in st.session_state:
-        logger.info("Initializing session state for 'active_candidate_tab'.")
+        #logger.info("Initializing session state for 'active_candidate_tab'.")
         st.session_state["active_candidate_tab"] = "View All Candidates"
 
 
@@ -391,28 +391,28 @@ def admin_tab():
         ],
     )
     if admin_menu == "📊 Dashboard":
-        logger.info("Admin selected Dashboard tab.")
+        #logger.info("Admin selected Dashboard tab.")
         admin_dashboard()
     elif admin_menu == "🏢 Company Management":
-        logger.info("Admin selected Company Management tab.")
+        #logger.info("Admin selected Company Management tab.")
         admin_company_mgmt()
     elif admin_menu == "💼 Vacancy Management":
-        logger.info("Admin selected Vacancy Management tab.")
+        #logger.info("Admin selected Vacancy Management tab.")
         admin_vacancy_mgmt()
     elif admin_menu == "👥 Candidate Management":
-        logger.info("Admin selected Candidate Management tab.")
+        #logger.info("Admin selected Candidate Management tab.")
         admin_candidate_mgmt()
     elif admin_menu == "🔍 Advanced Filtering":
-        logger.info("Admin selected Advanced Filtering tab.")
+        #logger.info("Admin selected Advanced Filtering tab.")
         admin_advanced_filtering()
     elif admin_menu == "🎯 Job Matching":
-        logger.info("Admin selected Job Matching tab.")
+        #logger.info("Admin selected Job Matching tab.")
         admin_job_matching()
     elif admin_menu == "📋 Interview Management":
-        logger.info("Admin selected Interview Management tab.")
+        #logger.info("Admin selected Interview Management tab.")
         admin_interview_mgmt()
     elif admin_menu == "📈 Reports & Analytics":
-        logger.info("Admin selected Reports & Analytics tab.")
+        #logger.info("Admin selected Reports & Analytics tab.")
         admin_reports()
 
 
@@ -893,7 +893,7 @@ def admin_vacancy_mgmt():
 # ADMIN: CANDIDATE MANAGEMENT
 # ====================================================
 def admin_candidate_mgmt():
-    logger.info("Entering admin_candidate_mgmt function.")
+    #logger.info("Entering admin_candidate_mgmt function.")
     st.subheader("👥 Candidate Management")
     
     # Define tab names
@@ -905,38 +905,38 @@ def admin_candidate_mgmt():
     
     # Get current active tab from session state
     if "active_candidate_tab" not in st.session_state:
-        logger.info("Setting default active_candidate_tab to 'View All Candidates'")
+        #logger.info("Setting default active_candidate_tab to 'View All Candidates'")
         st.session_state["active_candidate_tab"] = tab_names[0]
     
     # Create tabs
     tab1, tab2, tab3 = st.tabs(tab_names)
-    logger.info(f"Created tabs: {tab_names}")
+    #logger.info(f"Created tabs: {tab_names}")
     
     # TAB 1: View All Candidates
     with tab1:
-        logger.info("Displaying all candidates in View All Candidates tab.")
+        #logger.info("Displaying all candidates in View All Candidates tab.")
         st.write("### All Candidates")
-        logger.info("Showing info tip for advanced filtering.")
+        #logger.info("Showing info tip for advanced filtering.")
         st.info(
             "💡 Tip: Use 'Advanced Filtering' menu for detailed filtering with 70+ columns"
         )
         candidates_df = get_candidates()
-        logger.info(f"Number of candidates fetched: {len(candidates_df)}")
+        #logger.info(f"Number of candidates fetched: {len(candidates_df)}")
         if len(candidates_df) > 0:
-            logger.info("Displaying candidates dataframe.")
+            #logger.info("Displaying candidates dataframe.")
             st.dataframe(candidates_df, use_container_width=True, height=400)
             csv = candidates_df.to_csv(index=False)
-            logger.info("Prepared CSV data for download.")
+            #logger.info("Prepared CSV data for download.")
             st.download_button(
                 label="📤 Download All Candidates (CSV)",
                 data=csv,
                 file_name="all_candidates.csv",
                 mime="text/csv",
             )
-            logger.info("Displayed download button for all candidates CSV.")
+            #logger.info("Displayed download button for all candidates CSV.")
         else:
             st.info("No candidates found")
-            logger.info("No candidates found to display.")
+            #logger.info("No candidates found to display.")
 
     # TAB 2: Quick Form
     with tab2:
@@ -984,7 +984,7 @@ def admin_candidate_mgmt():
     
     # TAB 3: Full Form (Wizard)
     with tab3:
-        logger.info("Rendering Full Form (Wizard) tab for adding candidate.")
+        #logger.info("Rendering Full Form (Wizard) tab for adding candidate.")
         #st.write("### Add Candidate (Full 70+ Field Form)")
         #st.info("📝 Complete candidate registration with all details")
         
@@ -1317,11 +1317,11 @@ def check_existing_selections(candidate_id):
                     'job_title': job_title
                 })
         
-        logger.info(f"Found {len(existing_selections)} existing selections for candidate {candidate_id}")
+        #logger.info(f"Found {len(existing_selections)} existing selections for candidate {candidate_id}")
         return existing_selections
         
     except Exception as e:
-        logger.error(f"Error checking existing selections: {e}")
+        #logger.error(f"Error checking existing selections: {e}")
         return []
 
 
@@ -1330,7 +1330,7 @@ def update_selection_status(current_record_id, keep_selection, existing_selectio
     try:
         client = get_google_sheets_client()
         if not client:
-            logger.error("Failed to get sheets client")
+            #logger.error("Failed to get sheets client")
             return False
         
         sheet = client.open_by_key(SHEET_ID).worksheet("Interview_Records")
@@ -1365,12 +1365,12 @@ def update_selection_status(current_record_id, keep_selection, existing_selectio
         
         if updates:
             sheet.batch_update(updates)
-            logger.info(f"Updated {len(reject_rows)} records to 'Rejected'")
+            #logger.info(f"Updated {len(reject_rows)} records to 'Rejected'")
         
         return True
         
     except Exception as e:
-        logger.error(f"Error updating selection status: {e}")
+        #logger.error(f"Error updating selection status: {e}")
         return False
 
 
@@ -1428,12 +1428,12 @@ def cancel_pending_entries(candidate_id, current_record_id):
             
             if updates:
                 sheet.batch_update(updates)
-                logger.info(f"Cancelled {len(pending_rows)} pending entries for candidate {candidate_id}")
+                #logger.info(f"Cancelled {len(pending_rows)} pending entries for candidate {candidate_id}")
         
         return True
         
     except Exception as e:
-        logger.error(f"Error cancelling pending entries: {e}")
+        #logger.error(f"Error cancelling pending entries: {e}")
         return False
 
 # ========== ADD THESE 3 NEW FUNCTIONS ==========
@@ -1557,7 +1557,7 @@ def get_updatable_interviews(interviews_df, vacancies_df):
 # ========== MAIN FUNCTION ==========
 
 def admin_interview_mgmt():
-    logger.info("Entering admin_interview_mgmt function.")
+    #logger.info("Entering admin_interview_mgmt function.")
     #st.markdown(
     #"""
     #Complete Interview Management System
@@ -1576,7 +1576,7 @@ def admin_interview_mgmt():
 
     
     # Create 4 tabs
-    logger.info("Creating tabs for Interview Management.")      
+    #logger.info("Creating tabs for Interview Management.")      
     tab1, tab2, tab3, tab4 = st.tabs([
         "📊 Dashboard", 
         "🗓️ Schedule Interview", 
@@ -1589,61 +1589,61 @@ def admin_interview_mgmt():
         st.markdown("### 📊 Interview Dashboard")
         
         interviews_df = get_interviews()
-        logger.info(f"Fetched {len(interviews_df)} interview records.")    
+        #logger.info(f"Fetched {len(interviews_df)} interview records.")    
         
         if len(interviews_df) > 0:
-            logger.info("Rendering statistics cards.")
+            #logger.info("Rendering statistics cards.")
             col1, col2, col3, col4 = st.columns(4)
-            logger.info("Calculating metrics for dashboard.")   
+            #logger.info("Calculating metrics for dashboard.")   
             
             with col1:
-                logger.info("Calculating Matched count.")
+                #logger.info("Calculating Matched count.")
                 matched_count = len(interviews_df[interviews_df['Interview Status'] == 'Matched'])
                 st.metric("🎯 Matched", matched_count)
             
             with col2:
-                logger.info("Calculating Scheduled count.")
+                #logger.info("Calculating Scheduled count.")
                 scheduled_count = len(interviews_df[interviews_df['Interview Status'] == 'Interview Scheduled'])
                 st.metric("🗓️ Scheduled", scheduled_count)
             
             with col3:
-                logger.info("Calculating Completed count.")
+                #logger.info("Calculating Completed count.")
                 completed_count = len(interviews_df[interviews_df['Interview Status'] == 'Interview Completed'])
                 st.metric("✅ Completed", completed_count)
             
             with col4:
-                logger.info("Calculating Selected count.")
+                #logger.info("Calculating Selected count.")
                 selected_count = len(interviews_df[interviews_df['Result Status'] == 'Selected'])
                 st.metric("🎉 Selected", selected_count)
             
             st.markdown("---")
-            logger.info("Rendering today's interviews section.")
+            #logger.info("Rendering today's interviews section.")
             
             # Today's Interviews
             today = pd.Timestamp.now().strftime('%Y-%m-%d')
-            logger.info(f"Filtering interviews for today: {today}")
+            #logger.info(f"Filtering interviews for today: {today}")
             
             if 'Interview Date' in interviews_df.columns:
-                logger.info("Interview Date column found, proceeding with filtering.")
+                #logger.info("Interview Date column found, proceeding with filtering.")
                 interviews_df['Interview Date'] = interviews_df['Interview Date'].astype(str)
-                logger.info("Filtering interviews scheduled for today.")
+                #logger.info("Filtering interviews scheduled for today.")
                 today_interviews = interviews_df[
                     (interviews_df['Interview Status'] == 'Interview Scheduled') & 
                     (interviews_df['Interview Date'].str.contains(today, na=False))
                 ]
-                logger.info(f"Found {len(today_interviews)} interviews scheduled for today.")
+                #logger.info(f"Found {len(today_interviews)} interviews scheduled for today.")
                 if len(today_interviews) > 0:
-                    logger.info("Displaying today's interviews.")
+                    #logger.info("Displaying today's interviews.")
                     st.markdown("### 🔥 Today's Interviews")
-                    logger.info("Preparing columns for display.")
+                    #logger.info("Preparing columns for display.")
                     display_cols = ['Record ID', 'Full Name', 'Company Name', 'Job Title', 'Interview Time']
-                    logger.info("Checking available columns in today's interviews.")
+                    #logger.info("Checking available columns in today's interviews.")
                     available_cols = [col for col in display_cols if col in today_interviews.columns]
-                    logger.info(f"Available columns for display: {available_cols}") 
+                    #logger.info(f"Available columns for display: {available_cols}") 
                     st.dataframe(today_interviews[available_cols], use_container_width=True, hide_index=True)
-                    logger.info("Displayed today's interviews dataframe.")
+                    #logger.info("Displayed today's interviews dataframe.")
                 else:
-                    logger.info("No interviews scheduled for today.")
+                    #logger.info("No interviews scheduled for today.")
                     st.info("✅ No interviews scheduled for today")
             else:
                 st.info("✅ No interviews scheduled for today")
@@ -1704,7 +1704,7 @@ def admin_interview_mgmt():
                     ]
                     
                     if len(candidate_info) > 0:
-                        logger.info("Candidate details found in Candidates sheet.")
+                        #logger.info("Candidate details found in Candidates sheet.")
                         candidate = candidate_info.iloc[0]
                         phone = candidate.get('Phone', candidate.get('Mobile', candidate.get('Contact Number', 'N/A')))
                         email = candidate.get('Email', 'N/A')
@@ -1714,7 +1714,7 @@ def admin_interview_mgmt():
                         st.warning("⚠️ Candidate details not found in Candidates sheet")
                 
                 with col2:
-                    logger.info("Displaying company details.")
+                    #logger.info("Displaying company details.")
                     st.markdown("#### 🏢 Company Details")
                     st.write(f"**Company:** {interview_data['Company Name']}")
                     st.write(f"**Position:** {interview_data['Job Title']}")
@@ -1866,12 +1866,12 @@ def admin_interview_mgmt():
     # ========== TAB 3: UPDATE RESULT ==========
     with tab3:
         st.markdown("### ✅ Update Interview Result")
-        logger.info("Fetching interview and vacancy data for result update.")   
+        #logger.info("Fetching interview and vacancy data for result update.")   
         
-        logger.info("Merging vacancy status into interview records.")
+        #logger.info("Merging vacancy status into interview records.")
     # NEW: merge vacancy Status into interviews_df using CID + Job Title
         if len(vacancies_df) > 0 and 'CID' in vacancies_df.columns and 'Job Title' in vacancies_df.columns and 'status' in vacancies_df.columns:
-            logger.info("Vacancy DataFrame has required columns. Proceeding with merge.")
+            #logger.info("Vacancy DataFrame has required columns. Proceeding with merge.")
             interviews_df = interviews_df.merge(
                 vacancies_df[['CID', 'Job Title', 'status']],
                 on=['CID', 'Job Title'],
@@ -2062,7 +2062,7 @@ def admin_interview_mgmt():
                                         
                                         st.success("✅ Result updated in Interview_Records!")
                                         
-                                        logger.info("Starting status sync...")
+                                        #logger.info("Starting status sync...")
                                         sync_result = sync_all_statuses(
                                             candidate_id=interview_data['Candidate ID'],
                                             company_id=interview_data['CID'],
@@ -2089,7 +2089,7 @@ def admin_interview_mgmt():
                                 else:
                                     st.error("❌ Could not connect to Google Sheets")
                             except Exception as e:
-                                logger.error(f"Error updating result: {str(e)}")
+                                #logger.error(f"Error updating result: {str(e)}")
                                 st.error(f"❌ Error updating result: {str(e)}")
             else:
                 st.info("✅ No interviews to update")
@@ -2885,4 +2885,5 @@ def main():
 # ENTRY POINT
 # ====================================================
 if __name__ == "__main__":
+
     main()
