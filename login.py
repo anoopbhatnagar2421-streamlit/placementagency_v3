@@ -1,7 +1,6 @@
-# login.py
 import streamlit as st
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 import hashlib
 from datetime import datetime
 import pandas as pd
@@ -10,29 +9,31 @@ import pandas as pd
 # PAGE CONFIG (top-level)
 # -------------------------------------------------------
 #st.set_page_config(
-#    page_title="Placement Agency - Login",
- #   page_icon="🔐",
-  #  layout="centered",
-   # initial_sidebar_state="collapsed"
+   # page_title="Placement Agency - Login",
+   # page_icon="🔐",
+    #layout="centered",
+    #initial_sidebar_state="collapsed"
 #)
 
 # =======================================================
 # GOOGLE SHEETS CONFIG FOR LOGIN
 # =======================================================
-SHEET_ID = "1rpuXdpfwjy0BQcaZcn0Acbh-Se6L3PvyNGiNu4NLcPA"  # Same sheet ID
-CRED_FILE = "credentials.json"
+SHEET_ID = "1rpuXdpfwjy0BQcaZcn0Acbh-Se6L3PvyNGiNu4NLcPA"
 
 
 @st.cache_resource
 def get_google_sheets_client():
-    """Cached Google Sheets client for login"""
+    """Cached Google Sheets client for login - using st.secrets"""
     try:
         scope = [
             'https://spreadsheets.google.com/feeds',
             'https://www.googleapis.com/auth/drive'
         ]
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-            CRED_FILE, scope
+        
+        # Use st.secrets instead of credentials.json
+        credentials = Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
+            scopes=scope
         )
         client = gspread.authorize(credentials)
         return client
@@ -461,4 +462,3 @@ def logout():
 # =======================================================
 if __name__ == "__main__":
     render_login()
-
